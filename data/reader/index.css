@@ -1,15 +1,13 @@
 :root {
   --bg-color-dark-overlay: rgba(0, 0, 0, 0.1);
   --bg-color-popup: #fbfbfb;
-  --border-color: #b5b5b5;
+  --border-color: #dedede;
   --color-dark-note: #666;
   --box-shadow: #666;
-
   --sans: Helvetica, Arial, sans-serif;
   --serif: Georgia, "Times New Roman", serif;
-
-  --color-mode-dark: #eeeeee;
-  --bg-color-mode-dark: #333333;
+  --color-mode-dark: #eee;
+  --bg-color-mode-dark: #333;
   --color-mode-sepia: #5b4636;
   --bg-color-mode-sepia: #f4ecd8;
   --color-mode-light: #000;
@@ -37,7 +35,7 @@ html[data-mode=sepia] body {
 
 body {
   font-size: 13px;
-  font-family: Arial,"Helvetica Neue",Helvetica,sans-serif;
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
   margin: 0;
   height: 100vh;
   display: flex;
@@ -71,8 +69,8 @@ svg {
   border-right: solid 1px var(--border-color);
 }
 
-#sidebar>button,
-#sidebar>input {
+#sidebar > button,
+#sidebar > input {
   background-color: transparent;
   width: 38px;
   height: 50px;
@@ -178,6 +176,11 @@ svg {
   bottom: 20px;
   right: 20px;
 }
+@media screen and (max-width: 600px) {
+  #nav {
+    display: none;
+  }
+}
 body[data-mode=light] #nav {
   background-color: var(--bg-color-mode-light);
 }
@@ -201,10 +204,25 @@ body[data-mode=sepia] #nav {
   height: 100vh;
   width: 100px;
   border: none;
+  margin-left: -1px;
+}
+#content:empty::before {
+  content: 'Drag an ePub book (*.epub or *.opf) to start reading';
+  margin: auto;
+  font-size: 16px;
+}
+#content > div {
+  border: solid 1px var(--border-color);
+  border-width: 0 1px;
 }
 
 #stat {
-  padding: 10px;
+  width: 38px;
+  flex-flow: wrap;
+}
+#stat span {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 #toc {
@@ -269,7 +287,7 @@ body[data-mode=sepia] #nav {
 }
 .popup::before {
   border-color: rgba(181, 181, 181, 0);
-  border-right-color: #B5B5B5;
+  border-right-color: #b5b5b5;
   border-width: 11px;
   margin-top: -11px;
 }

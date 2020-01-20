@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>ePub Reader</title>
+  <title>ePub Viewer</title>
   <link rel="stylesheet" type="text/css" href="index.css">
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body class="loading">
   <div id="sidebar" vbox>
@@ -74,6 +75,9 @@
       </svg>
     </button>
     <div flex=1></div>
+    <div hbox pack=center id="stat">
+      <span id="page">-</span>/<span id="total">-</span>
+    </div>
     <div id="toc" hbox pack="center" align="center">
       <svg width="24" height="24" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
         <path d="M6 18h28v-4h-28v4zm0 8h28v-4h-28v4zm0 8h28v-4h-28v4zm32 0h4v-4h-4v4zm0-20v4h4v-4h-4zm0 12h4v-4h-4v4z"/>
@@ -82,20 +86,16 @@
       <select id="toc"></select>
     </div>
   </div>
-  <div flex=1 id="content" hbox pack=center>
-  </div>
+  <div flex=1 id="content" hbox pack=center></div>
   <div id="nav">
-    <div hbox pack=center id="stat">
-      <span id="page">-</span>/<span id="total">-</span>
-    </div>
-    <button data-command="previous">
+    <button data-command="previous" disabled="true">
         <svg width="24" height="24" version="1.1" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
           <rect fill="none" height="50" width="50"/>
           <polygon points="35,47.25 37.086,45.164 16.922,25 37.086,4.836 35,2.75 12.75,25 "/>
           <rect fill="none" height="50" width="50"/>
         </svg>
     </button>
-    <button data-command="next">
+    <button data-command="next" disabled="true">
       <svg width="24" height="24" version="1.1" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
         <rect fill="none" height="50" width="50"/>
         <polygon points="15,2.75 12.914,4.836 33.078,25 12.914,45.164 15,47.25 37.25,25 "/>

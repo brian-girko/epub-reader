@@ -1,8 +1,8 @@
 {
-  "name": "ePub Reader",
+  "name": "ePub Viewer",
   "description": "Read ePubs in a reader view style window, convert into PDF or use text to speech",
   "author": "Brian Girko",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "manifest_version": 2,
   "permissions": [
     "storage",
@@ -29,5 +29,6 @@
     "64": "data/icons/64.png",
     "128": "data/icons/128.png",
     "256": "data/icons/256.png"
-  }
+  },
+  "browser_action": {}
 }

@@ -2,9 +2,7 @@
 'use strict';
 
 const args = new URLSearchParams(location.search);
-if (args.has('href') === false) {
-  args.set('href', 'https://s3.amazonaws.com/moby-dick/moby-dick.epub');
-}
+const book = ePub();
 
 const app = {
   on(name, callback) {
@@ -75,7 +73,48 @@ Object.defineProperty(ui.width, 'value', {
   });
 }
 
-const book = ePub(args.get('href'));
+app.on('prefs-ready', () => {
+  if (args.has('href')) {
+    // prevent the empty content from being displayed
+    $.content.textContent = ' ';
+    const name = chrome.runtime.getManifest().name;
+    const req = new XMLHttpRequest();
+    req.open('GET', args.get('href'));
+    req.responseType = 'arraybuffer';
+    req.onprogress = e => {
+      document.title = name + ` (${(e.loaded / e.total * 100).toFixed(0)}%)`;
+    };
+    req.onload = () => {
+      book.open(req.response);
+    };
+    req.onerror = e => alert('Failed:\n\n' + (e.message || 'Failed to get the book from this resource'));
+    req.ontimeout = () => alert('Timeout:\n\nFetch timeout error');
+    document.title = name + ` (0%)`;
+    req.send();
+  }
+  else {
+    document.body.classList.remove('loading');
+  }
+});
+document.addEventListener('drop', e => {
+  e.preventDefault();
+  for (const item of e.dataTransfer.items) {
+    document.body.classList.add('loading');
+    if (item.kind === 'file') {
+      const file = item.getAsFile();
+      const reader = new FileReader();
+      reader.onload = () => book.open(reader.result);
+      reader.onerror = e => {
+        alert('Failed:\n\n' + e.message);
+      };
+      reader.readAsArrayBuffer(file);
+      break;
+    }
+  }
+});
+document.addEventListener('dragover', e => {
+  e.preventDefault();
+});
 book.loaded.navigation.then(navigation => app.emit('navigation-ready', navigation));
 
 // open cfi
@@ -124,25 +163,32 @@ app.on('prefs-ready', () => {
     },
     'a': {
       'color': 'inherit !important'
+    },
+    '.galley-rw': {
+      'font-family': 'inherit',
+      'line-height': 'inherit'
+    },
+    '.title-block-rw h1': {
+      'font-family': 'inherit'
     }
   });
   // themes
   rendition.themes.register('sepia', {
-    'body': {
-      'color': ss.getPropertyValue('--color-mode-sepia'),
-      'background-color': ss.getPropertyValue('--bg-color-mode-sepia')
+    '*': {
+      'color': ss.getPropertyValue('--color-mode-sepia') + '!important',
+      'background-color': ss.getPropertyValue('--bg-color-mode-sepia') + '!important'
     }
   });
   rendition.themes.register('dark', {
-    'body': {
-      'color': ss.getPropertyValue('--color-mode-dark'),
-      'background-color': ss.getPropertyValue('--bg-color-mode-dark')
+    '*': {
+      'color': ss.getPropertyValue('--color-mode-dark') + '!important',
+      'background-color': ss.getPropertyValue('--bg-color-mode-dark') + '!important'
     }
   });
   rendition.themes.register('light', {
-    'body': {
-      'color': ss.getPropertyValue('--color-mode-light'),
-      'background-color': ss.getPropertyValue('--bg-color-mode-light')
+    '*': {
+      'color': ss.getPropertyValue('--color-mode-light') + '!important',
+      'background-color': ss.getPropertyValue('--bg-color-mode-light') + '!important'
     }
   });
   // font family
@@ -168,7 +214,6 @@ app.on('relocated', ({start}) => {
       }
     }
   }
-  console.log(start);
   app.emit('navigation-item', book.navigation.toc[start.index]);
 });
 // title
@@ -180,7 +225,8 @@ app.on('navigation-item', nav => {
   const page = document.getElementById('page');
   const total = document.getElementById('total');
 
-  app.on('relocated', ({start: {displayed}}) => {
+  app.on('relocated', e => {
+    const {start: {displayed}} = e;
     page.textContent = displayed.page;
     total.textContent = displayed.total;
   });
@@ -219,7 +265,7 @@ app.on('rendition', rendition => {
   document.addEventListener('keyup', keyup);
 });
 // mouse
-document.addEventListener('wheel', e => console.log(e));
+// document.addEventListener('wheel', e => console.log(e));
 // user preference
 app.on('rendition', ui.mode);
 app.on('rendition', ui.size);
@@ -303,17 +349,27 @@ document.addEventListener('click', e => {
     });
   }
   else if (command === 'fullscreen') {
-    if (document.body.requestFullscreen) {
-      document.body.requestFullscreen();
+    if (document.fullscreen) {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+      else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+      }
+      else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      }
     }
-    else if (document.body.mozRequestFullScreen) {
-      document.body.mozRequestFullScreen();
-    }
-    else if (document.body.webkitRequestFullscreen) {
-      document.body.webkitRequestFullscreen();
-    }
-    else if (document.body.msRequestFullscreen) {
-      document.body.msRequestFullscreen();
+    else {
+      if (document.body.requestFullscreen) {
+        document.body.requestFullscreen();
+      }
+      else if (document.body.mozRequestFullScreen) {
+        document.body.mozRequestFullScreen();
+      }
+      else if (document.body.webkitRequestFullscreen) {
+        document.body.webkitRequestFullscreen();
+      }
     }
   }
   else if (command === 'close') {
@@ -326,9 +382,6 @@ document.addEventListener('click', e => {
       }
       else if (document.webkitExitFullscreen) {
         document.webkitExitFullscreen();
-      }
-      else if (document.msExitFullscreen) {
-        document.msExitFullscreen();
       }
     }
     else {
