@@ -73,24 +73,49 @@ Object.defineProperty(ui.width, 'value', {
   });
 }
 
-app.on('prefs-ready', () => {
+function humanFileSize(size) {
+  const i = Math.floor(Math.log(size) / Math.log(1024));
+  return (size / Math.pow(1024, i)).toFixed(2) * 1 + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
+};
+
+app.on('prefs-ready', async () => {
   if (args.has('href')) {
     // prevent the empty content from being displayed
     $.content.textContent = ' ';
     const name = chrome.runtime.getManifest().name;
-    const req = new XMLHttpRequest();
-    req.open('GET', args.get('href'));
-    req.responseType = 'arraybuffer';
-    req.onprogress = e => {
-      document.title = name + ` (${(e.loaded / e.total * 100).toFixed(0)}%)`;
-    };
-    req.onload = () => {
-      book.open(req.response);
-    };
-    req.onerror = e => alert('Failed:\n\n' + (e.message || 'Failed to get the book from this resource'));
-    req.ontimeout = () => alert('Timeout:\n\nFetch timeout error');
     document.title = name + ` (0%)`;
-    req.send();
+
+    try {
+      const response = await fetch(args.get('href'));
+      const total = Number(response.headers.get('Content-Length') || 0);
+      if (!total) {
+        document.title = name + '(please wait...)';
+      }
+      const reader = response.body.getReader();
+
+      const chunks = [];
+      let size = 0;
+      while (true) {
+        const {done, value} = await reader.read();
+        if (done) {
+          break;
+        }
+        chunks.push(value);
+        size += value.length;
+        if (total) {
+          document.title = name + ` (${(size / total * 100).toFixed(0)}%)`;
+        }
+        else {
+          document.title = name + ` (${humanFileSize(size)})`;
+        }
+      }
+      const buffer = await (new Blob(chunks)).arrayBuffer();
+      book.open(buffer);
+    }
+    catch (e) {
+      console.warn(e);
+      alert(e.message);
+    }
   }
   else {
     document.body.classList.remove('loading');
@@ -142,7 +167,11 @@ app.on('navigation-ready', navigation => {
   // change content
   toc.addEventListener('change', e => book.rendition.display(e.target.value));
   // update TOC
-  app.on('navigation-item', nav => toc.value = nav.href);
+  app.on('navigation-item', nav => {
+    if (nav?.href) {
+      toc.value = nav.href;
+    }
+  });
 });
 
 app.on('prefs-ready', () => {
@@ -218,7 +247,7 @@ app.on('relocated', ({start}) => {
 });
 // title
 app.on('navigation-item', nav => {
-  document.title = nav.label || 'No Title';
+  document.title = nav?.label || chrome.runtime.getManifest().name;
 });
 // page number
 {
